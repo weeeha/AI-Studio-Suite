@@ -2,7 +2,7 @@
   all: initial;
   position: fixed;
   left: 16px;                   /* ds: card-margin */
-  bottom: 16px;
+  bottom: var(--pill-bottom, 16px); /* a tool can lift the pill clear of its own bottom controls */
   z-index: 2147483000;
   display: flex;
   flex-direction: column-reverse; /* trigger first in DOM order, menu drawn above it */

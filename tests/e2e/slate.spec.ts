@@ -22,6 +22,11 @@ test('Slate creates a project that survives a reload, and the pill stays clear',
   await page.getByPlaceholder('New project title — e.g. Night Market').fill('Smoke Market')
   await page.getByRole('button', { name: 'Create Project' }).click()
   await expect(page.getByRole('button', { name: 'Close Project' })).toBeVisible()
+  // Inside a project Slate has controls in both bottom corners; the lifted pill must clear them on every tab.
+  for (const tab of ['Setups', 'Coverage', 'Studios', 'Refs', 'Deliver']) {
+    await page.getByRole('button', { name: tab, exact: true }).click()
+    await expectPillClear(page)
+  }
   await expect(page.locator('.save-dot')).toHaveCount(0)
   await page.reload()
   await expect(page.getByText('Smoke Market').first()).toBeVisible()

@@ -17,6 +17,12 @@ test('takes its corner from the tool it sits in, defaulting to bottom-left', () 
   expect(mountPill({ tools, pathname: '/' }).dataset.corner).toBe('bottom-left')
 })
 
+test('a tool can lift the pill with pillBottom', () => {
+  const lifted: PillTool[] = [{ ...tools[0], pillBottom: 48 }]
+  expect(mountPill({ tools: lifted, pathname: '/cork/' }).style.getPropertyValue('--pill-bottom')).toBe('48px')
+  expect(mountPill({ tools, pathname: '/cork/' }).style.getPropertyValue('--pill-bottom')).toBe('')
+})
+
 test('currentTool matches the first path segment', () => {
   expect(currentTool(tools, '/script/')?.id).toBe('script')
   expect(currentTool(tools, '/script/index.html')?.id).toBe('script')
