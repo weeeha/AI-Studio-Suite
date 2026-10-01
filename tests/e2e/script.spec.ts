@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './fixtures'
 import { watchErrors } from './helpers'
 
 test('ScriptBreak imports a Fountain script, keeps it after reload, saves the project', async ({ page }) => {

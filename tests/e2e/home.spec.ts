@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './fixtures'
 import { watchErrors } from './helpers'
 
 test('home lists the pipeline and opens Cork Board', async ({ page }) => {
