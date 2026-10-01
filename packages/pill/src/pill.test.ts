@@ -42,7 +42,7 @@ test('opens with links for enabled tools, marks the current one, mutes disabled 
   root.querySelector('button')!.click()
   expect(root.querySelector('button')!.getAttribute('aria-expanded')).toBe('true')
   const links = [...root.querySelectorAll('a')].map(a => [a.textContent, a.getAttribute('href'), a.getAttribute('aria-current')])
-  expect(links).toEqual([['Home', '../', null], ['Cork Board', '../cork/', 'page'], ['ScriptBreak', '../script/', null]])
+  expect(links).toEqual([['Home', '../', null], ['Cork Board', '../cork/', 'page'], ['ScriptBreak', '../script/', null], ['Credits', '../#credits', null]])
   expect(root.querySelector('[data-disabled="slate"]')!.textContent).toContain('desktop only')
 })
 
@@ -71,9 +71,9 @@ test('opening focuses the first item; arrows wrap, Home and End jump', () => {
   const { root, key, links } = open()
   expect(root.activeElement).toBe(links[0])
   key('ArrowDown'); expect(root.activeElement).toBe(links[1])
-  key('End'); expect(root.activeElement).toBe(links[2])
+  key('End'); expect(root.activeElement).toBe(links[3])
   key('ArrowDown'); expect(root.activeElement).toBe(links[0])
-  key('ArrowUp'); expect(root.activeElement).toBe(links[2])
+  key('ArrowUp'); expect(root.activeElement).toBe(links[3])
   key('Home'); expect(root.activeElement).toBe(links[0])
 })
 
@@ -110,4 +110,14 @@ test('remounting adds no further document pointerdown listeners', () => {
   mountPill({ tools, pathname: '/cork/' })
   expect(add.mock.calls.filter(c => c[0] === 'pointerdown').length).toBe(0)
   add.mockRestore()
+})
+
+test('ends with a Credits link to the home credits', () => {
+  const host = mountPill({ tools, pathname: '/script/' })
+  const root = host.shadowRoot!
+  root.querySelector('button')!.click()
+  const items = [...root.querySelectorAll('[role="menuitem"]')]
+  const last = items[items.length - 1] as HTMLAnchorElement
+  expect(last.textContent).toBe('Credits')
+  expect(last.getAttribute('href')).toBe('../#credits')
 })

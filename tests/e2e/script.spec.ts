@@ -1,9 +1,11 @@
 import { test, expect } from './fixtures'
-import { watchErrors } from './helpers'
+import { watchErrors, expectPillClear } from './helpers'
 
 test('ScriptBreak imports a Fountain script, keeps it after reload, saves the project', async ({ page }) => {
   const errors = watchErrors(page)
+  await page.setViewportSize({ width: 1280, height: 800 })
   await page.goto('/script/')
+  await expectPillClear(page)
   await page.locator('#fileInput').setInputFiles('tests/fixtures/two-scenes.fountain')
   await expect(page.locator('.scene-card')).toHaveCount(2)
 

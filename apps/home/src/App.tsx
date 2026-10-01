@@ -15,7 +15,7 @@ export function App({ tools }: { tools: SuiteTool[] }) {
             <li key={tool.id}><ToolCard tool={tool} step={i + 1} /></li>
           ))}
         </ol>
-        <footer className="text-text-secondary max-w-prose text-sm">
+        <footer id="credits" className="text-text-secondary max-w-prose text-sm">
           Tools by Sam Wasserman, Wasserman Productions (<a className="text-text-primary underline underline-offset-4" href="https://wassermanproductions.com">wassermanproductions.com</a>), Apache-2.0.
           If they help you, support the author at <a className="text-text-primary underline underline-offset-4" href="https://ko-fi.com/samwasserman">ko-fi.com/samwasserman</a>.
         </footer>

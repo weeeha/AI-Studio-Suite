@@ -83,6 +83,14 @@ export function mountPill({ tools, pathname, doc = document }: { tools: PillTool
     }
   }
 
+  const rule = doc.createElement('hr')
+  const credits = doc.createElement('a')
+  credits.className = 'credits'
+  credits.textContent = 'Credits'
+  credits.href = hrefTo(from, '/') + '#credits'
+  credits.setAttribute('role', 'menuitem')
+  menu.append(rule, credits)
+
   const items = () => [...menu.querySelectorAll<HTMLElement>('a')]
   const setOpen = (open: boolean, restoreFocus = true) => {
     menu.hidden = !open

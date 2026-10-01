@@ -25,3 +25,8 @@ test('credits the author with license and donation links', () => {
   expect(screen.getByRole('link', { name: 'wassermanproductions.com' })).toHaveAttribute('href', 'https://wassermanproductions.com')
   expect(screen.getByRole('link', { name: 'ko-fi.com/samwasserman' })).toHaveAttribute('href', 'https://ko-fi.com/samwasserman')
 })
+
+test('the credits footer is the #credits anchor target', () => {
+  const { container } = render(<App tools={tools} />)
+  expect(container.querySelector('footer#credits')).not.toBeNull()
+})
