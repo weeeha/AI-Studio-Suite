@@ -56,3 +56,15 @@ test('the suite pill switches from Cork Board to ScriptBreak', async ({ page }) 
   await expect(page).toHaveURL(/\/script\/$/)
   expect(errors).toEqual([])
 })
+
+test('tabbing out of the suite pill closes the menu', async ({ page }) => {
+  await page.goto('/cork/')
+  const pill = page.locator('suite-pill')
+  const toggle = pill.getByRole('button', { name: 'Suite' })
+  await toggle.click()
+  await expect(toggle).toHaveAttribute('aria-expanded', 'true')
+  // Focus starts on Home; Shift+Tab goes to the toggle (inside), then out to the page.
+  await page.keyboard.press('Shift+Tab')
+  await page.keyboard.press('Shift+Tab')
+  await expect(toggle).toHaveAttribute('aria-expanded', 'false')
+})

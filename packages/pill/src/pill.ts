@@ -16,6 +16,24 @@ const ICON = (d: string) =>
 const GRID_ICON = ICON('<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>')
 const CHEVRON_ICON = ICON('<path d="m6 15 6-6 6 6"/>')
 
+type Closer = (e: Event) => void
+const closers = new WeakMap<Document, Map<HTMLElement, Closer>>()
+function outsideClosers(doc: Document): Map<HTMLElement, Closer> {
+  let map = closers.get(doc)
+  if (!map) {
+    const m = new Map<HTMLElement, Closer>()
+    map = m
+    closers.set(doc, m)
+    doc.addEventListener('pointerdown', e => {
+      for (const [h, close] of m) {
+        if (h.isConnected) close(e)
+        else m.delete(h)
+      }
+    })
+  }
+  return map
+}
+
 export function mountPill({ tools, pathname, doc = document }: { tools: PillTool[]; pathname: string; doc?: Document }): HTMLElement {
   const here = currentTool(tools, pathname)
   const from = here?.path ?? '/'
@@ -79,7 +97,7 @@ export function mountPill({ tools, pathname, doc = document }: { tools: PillTool
     const i = list.indexOf(root.activeElement as HTMLElement)
     const target =
       key === 'ArrowDown' ? list[(i + 1) % list.length]
-      : key === 'ArrowUp' ? list[(i - 1 + list.length) % list.length]
+      : key === 'ArrowUp' ? list[i < 0 ? list.length - 1 : (i - 1 + list.length) % list.length]
       : key === 'Home' ? list[0]
       : key === 'End' ? list[list.length - 1]
       : undefined
@@ -90,8 +108,8 @@ export function mountPill({ tools, pathname, doc = document }: { tools: PillTool
     const next = (e as FocusEvent).relatedTarget as Node | null
     if (!menu.hidden && next && !root.contains(next) && next !== host) setOpen(false, false)
   })
-  // A pointer press outside the pill closes it.
-  doc.addEventListener('pointerdown', e => {
+  // A pointer press outside the pill closes it (one shared document listener).
+  outsideClosers(doc).set(host, e => {
     if (!menu.hidden && !e.composedPath().includes(host)) setOpen(false, false)
   })
 

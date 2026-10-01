@@ -89,3 +89,19 @@ test('focus moving outside the pill closes the menu and keeps focus there', () =
   expect(toggle.getAttribute('aria-expanded')).toBe('false')
   expect(root.activeElement).not.toBe(toggle)
 })
+
+test('ArrowUp with no focused item goes to the last link', () => {
+  const { root, menu, links } = open()
+  ;(root.activeElement as HTMLElement).blur()
+  menu.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }))
+  expect(root.activeElement).toBe(links[links.length - 1])
+})
+
+test('remounting adds no further document pointerdown listeners', () => {
+  mountPill({ tools, pathname: '/cork/' })
+  const add = vi.spyOn(document, 'addEventListener')
+  mountPill({ tools, pathname: '/cork/' })
+  mountPill({ tools, pathname: '/cork/' })
+  expect(add.mock.calls.filter(c => c[0] === 'pointerdown').length).toBe(0)
+  add.mockRestore()
+})
