@@ -49,3 +49,43 @@ test('Escape closes the menu and returns focus to the toggle', () => {
   expect(toggle.getAttribute('aria-expanded')).toBe('false')
   expect(root.activeElement ?? document.activeElement).toBe(toggle)
 })
+
+function open() {
+  const host = mountPill({ tools, pathname: '/cork/' })
+  const root = host.shadowRoot!
+  const toggle = root.querySelector('button')!
+  toggle.click()
+  const menu = root.querySelector('[role="menu"]')!
+  const key = (k: string) => menu.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true }))
+  const links = [...root.querySelectorAll('a')]
+  return { host, root, toggle, menu, key, links }
+}
+
+test('opening focuses the first item; arrows wrap, Home and End jump', () => {
+  const { root, key, links } = open()
+  expect(root.activeElement).toBe(links[0])
+  key('ArrowDown'); expect(root.activeElement).toBe(links[1])
+  key('End'); expect(root.activeElement).toBe(links[2])
+  key('ArrowDown'); expect(root.activeElement).toBe(links[0])
+  key('ArrowUp'); expect(root.activeElement).toBe(links[2])
+  key('Home'); expect(root.activeElement).toBe(links[0])
+})
+
+test('a pointer press outside closes the menu, inside does not', () => {
+  const { toggle, menu } = open()
+  menu.dispatchEvent(new Event('pointerdown', { bubbles: true, composed: true }))
+  expect(toggle.getAttribute('aria-expanded')).toBe('true')
+  document.body.dispatchEvent(new Event('pointerdown', { bubbles: true }))
+  expect(toggle.getAttribute('aria-expanded')).toBe('false')
+  expect(menu.hasAttribute('hidden')).toBe(true)
+})
+
+test('focus moving outside the pill closes the menu and keeps focus there', () => {
+  const { root, toggle, links } = open()
+  const other = document.createElement('input')
+  document.body.append(other)
+  other.focus()
+  links[0].dispatchEvent(new FocusEvent('focusout', { bubbles: true, composed: true, relatedTarget: other }))
+  expect(toggle.getAttribute('aria-expanded')).toBe('false')
+  expect(root.activeElement).not.toBe(toggle)
+})
