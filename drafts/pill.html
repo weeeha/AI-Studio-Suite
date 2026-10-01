@@ -1,0 +1,472 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI Studio Suite - tool switcher draft</title>
+<!--
+unslop constraints (me:unslop, Phase 0/1) for: floating tool switcher pill, bottom-left on every tool page
+
+Bound to: Minimal Design System tokens (Layer 1 + 2, names unchanged). Every colour, radius and space below is a token; no raw hex outside the copied token block.
+Type: system-ui only; sizes 13 / 15 / 20 / 32 px (4); weights from --weight-*; no tracking tricks, no caps eyebrows.
+Effects: none. No gradients, glass, glow, colored shadows. Pure #000/#fff pairs avoided (page uses base-50 / ink-950).
+Layout: container nesting max 1 (no cards in cards); separation = spacing, then hairline, then one card. Radii from --radius-*. Hover/focus/selection change colour only, never size.
+Dominance: one compact control. Closed it is a single 40px pill labelled Suite; open, the current tool is the only row with a tinted surface and weight, the rest recede.
+Icons: one inline icon, 2px stroke. No emoji.
+Motion: colour transitions only, tokenised durations, reduced-motion handled by the DS tokens. No idle loops.
+Copy: verb + object labels, no exclamation marks, no hype words, nothing invented. Tool names and blurbs are the brief's verbatim copy.
+States/a11y: semantic elements, visible focus, AA contrast in both themes, disabled tools say why ("desktop only").
+Responsive: checked at 375px, no horizontal scroll, tap targets >= 40px.
+-->
+<style>
+:root, .light {
+    /* ═══ Motion ═══
+       The four durations already in use across the kit, named. Pick by what
+       is moving, not by how long it should take:
+
+         fast      state changes in place — hover, focus ring, colour swap
+         base      something appears or moves a short distance — dropdown,
+                   tooltip, popover, toast
+         slow      a large surface enters — dialog, sheet, accordion panel
+         ambient   looping, never waited on — shimmer, typing indicator
+
+       Easing: `standard` for anything that starts and ends on screen;
+       `enter` (decelerate) for things arriving; `exit` (accelerate) for
+       things leaving. */
+    --motion-fast: 100ms;
+    --motion-base: 200ms;
+    --motion-slow: 300ms;
+    --motion-ambient: 1000ms;
+    --motion-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+    --motion-ease-enter: cubic-bezier(0, 0, 0, 1);
+    --motion-ease-exit: cubic-bezier(0.3, 0, 1, 1);
+
+    /* ═══ Layer 1 · Primitives ═══
+       Two ramps on purpose: --base drives surfaces, --ink drives content
+       (text, icons, borders). Splitting them lets you warm or cool the
+       surfaces without dragging the text along.
+
+       These are neutral placeholders. Replace both ramps with your project's
+       ramps and everything downstream re-themes. Stock Tailwind palettes are
+       used as literal hex in Layer 2, with the palette named in a comment. */
+    --base-50: #fafafa;  --base-100: #f5f5f5; --base-200: #e5e5e5; --base-300: #d4d4d4;
+    --base-400: #a3a3a3; --base-500: #737373; --base-600: #525252; --base-700: #404040;
+    --base-800: #262626; --base-900: #171717; --base-950: #0a0a0a;
+    --ink-50: #fafafa;   --ink-100: #f4f4f5;  --ink-200: #e4e4e7;  --ink-300: #d4d4d8;
+    --ink-400: #a1a1aa;  --ink-500: #71717a;  --ink-600: #52525b;  --ink-700: #3f3f46;
+    --ink-800: #27272a;  --ink-900: #18181b;  --ink-950: #09090b;
+
+    /* ═══ Layer 2 · Semantic tokens (Light mode).
+       Light/dark values live ONLY at this layer. ═══ */
+    /* Surface */
+    --surface-page: var(--base-50);
+    --surface-header: var(--base-50);
+    --surface: #ffffff;
+    --surface-card: #ffffff;
+    --surface-input: #ffffff;
+    --surface-popover: #ffffff;
+    --surface-hover: #09090b1a;            /* ink/950 @ 10% — translucent scrim over popover
+                                              surfaces (menu/list item hover). Literal alpha hex:
+                                              Figma cannot alias-with-alpha, so this stays a value */
+    --surface-secondary: var(--base-100);
+    --surface-tertiary: var(--base-200);
+    --surface-tooltip: #27272a;            /* zinc/800 (mode-invariant) */
+    --surface-sidebar: var(--base-50);     /* page-like in light, card-like in dark — no other
+                                              surface token matches it in BOTH modes */
+    /* Text */
+    --text-primary: var(--ink-950);
+    --text-secondary: var(--ink-600);
+    --text-tertiary: var(--ink-400);
+    --text-inverted: var(--ink-50);
+    --text-popover: var(--ink-950);
+    --text-accent: #171717;                /* ACCENT — neutral/900. Rebrand: change this + the 5 below */
+    --text-on-accent: #fafafa;             /* ACCENT — neutral/50. The label ON an accent fill, so it
+                                              inverts opposite --text-accent. NOT --text-inverted, whose
+                                              dark value is the ink ramp (#09090b), not the accent's */
+    --text-on-tooltip: #fafafa;            /* zinc/50 — pairs with --surface-tooltip, which is
+                                              mode-invariant, so this must NOT flip either. Same
+                                              reasoning as --text-on-accent: a general text token
+                                              (--text-inverted) goes near-black in dark and would
+                                              vanish on the tooltip's fixed dark surface. */
+    --text-disabled: var(--ink-300);
+    --text-destructive: #e7000b;           /* red/600 */
+    /* Icon */
+    --icon-primary: var(--ink-950);
+    --icon-secondary: #57534d;             /* stone/600 (mode-invariant) */
+    --icon-accent: #171717;                /* ACCENT — neutral/900 */
+    --icon-inverted: var(--ink-50);
+    --icon-destructive: #e7000b;           /* red/600 */
+    /* Button */
+    --button-primary: #171717;             /* ACCENT — neutral/900 */
+    --button-secondary: #f4f4f5;           /* zinc/100 */
+    --button-tertiary: transparent;
+    --button-tertiary-foreground: var(--ink-950);
+    --button-destructive: #e7000b;         /* red/600 */
+    --button-select-state: #0084d1;        /* sky/600 */
+    /* Accent — --secondary-accent (soft neutral surface) and --accent-secondary
+       (warm) are deliberately distinct; check tokens.ts usage strings before
+       reaching for either. Also --accent (shadcn, = button-primary) ≠
+       --accent-color ≠ --accent-bold — all three differ in dark mode. */
+    --secondary-accent: var(--ink-100);
+    --accent-color: var(--ink-900);
+    --accent-bold: #171717;                /* ACCENT — neutral/900 */
+    --accent-secondary: #e17100;           /* amber/600 */
+    --accent-info: #155dfc;                /* blue/600 (mode-invariant) */
+    --accent-critical: #e7000b;            /* red/600 (mode-invariant) */
+    --accent-alert: #ff6900;               /* orange/500 (mode-invariant) */
+    /* Border — note: --border and --input double as the shadcn names (same token) */
+    --border: var(--ink-200);
+    --border-hover: var(--ink-300);
+    --input: var(--ink-200);
+    --border-focus-ring: var(--ink-400);
+    --border-selected: #171717;            /* ACCENT — neutral/900 (sky/600 in dark) */
+    /* Charts (mode-invariant) */
+    --chart-1: #2b7fff;                    /* blue/500 */
+    --chart-2: #00a6f4;                    /* sky/500 */
+    --chart-3: #00bba7;                    /* teal/500 */
+    --chart-4: #8e51ff;                    /* violet/500 */
+    --chart-5: #f6339a;                    /* pink/500 */
+    /* Workflow status — generic states for any review/approval flow.
+       Aliases whose targets flip are RE-DECLARED in .dark (var() substitutes at
+       the declaring element, so a :root-only alias keeps its light value inside
+       a nested .dark wrapper — it is only coincidentally fine when .dark sits on
+       <html>). --status-expired is primitive-based and has an explicit override. */
+    --status-approved: #008236;            /* green/700 */
+    --status-pending: #e17100;             /* amber/600 */
+    --status-action: #f54a00;              /* orange/600 */
+    --status-rejected: var(--button-destructive);
+    --status-expired: var(--ink-500);
+    --status-draft: var(--surface-secondary);
+    /* Soft tints + borders for status chips/callouts. */
+    --status-approved-soft: #f0fdf4;       /* green/50 */
+    --status-pending-soft: #fffbeb;        /* amber/50 */
+    --status-action-soft: #fff7ed;         /* orange/50 */
+    --status-approved-border: #b9f8cf;     /* green/200 */
+    --status-pending-border: #fee685;      /* amber/200 */
+    --status-action-border: #ffd6a7;       /* orange/200 */
+
+    /* ═══ Layer 3 · shadcn compatibility aliases.
+       Components consume these; values come from Layer 2. Tokens with no
+       semantic source keep literals and are marked. NOTE: var() substitution
+       happens at the declaring element, so aliases whose targets flip must be
+       re-declared in .dark to work inside nested .dark wrappers. ═══ */
+    --background: var(--surface-page);
+    --foreground: var(--text-primary);
+    --card: var(--surface-card);
+    --card-foreground: var(--text-primary);
+    --popover: var(--surface-popover);
+    --popover-foreground: var(--text-popover);
+    --primary: var(--button-primary);
+    --primary-foreground: #fafafa;         /* neutral/50 — no semantic source */
+    --secondary: var(--button-secondary);
+    --secondary-foreground: #18181b;       /* zinc/900 — no semantic source */
+    --muted: var(--surface-secondary);
+    --muted-foreground: var(--text-secondary);
+    --accent: var(--button-primary);       /* deliberate: brand accent = primary */
+    --accent-foreground: #fafafa;          /* neutral/50 — no semantic source */
+    --destructive: var(--button-destructive);
+    --ring: var(--border-focus-ring);
+    --required: var(--status-action);
+    --required-foreground: #fffbf5;        /* warm near-white — no semantic source */
+    --sidebar: var(--surface-sidebar);
+    --sidebar-foreground: var(--text-primary);
+    --sidebar-primary: var(--button-primary);
+    --sidebar-primary-foreground: var(--text-on-accent);
+    --sidebar-accent: var(--secondary-accent);
+    --sidebar-accent-foreground: var(--accent-color);
+    --sidebar-border: var(--border);
+    --sidebar-ring: var(--border-focus-ring);
+
+    /* ═══ Dimension tokens ═══
+       Sizes only — color tokens sharing these prefixes (--icon-*, --button-*)
+       live in Layer 2 above. */
+    --radius-button: 8px;
+    --radius-control: 8px;
+    --radius-card: 16px;
+    --radius-popup: 24px;
+    --radius-rounded: 99px;
+    --radius-none: 0px;
+    --control-height-default: 32px;
+    --control-height-big: 40px;
+    --control-height-mega: 56px;
+    --control-header-nav: 48px;
+    --control-input-max: 360px;
+    --control-button-margin: 10px;
+    --control-margin: 10px;
+    --control-popup-margin: 24px;
+    --button-height-normal: 32px;
+    --button-height-big: 40px;
+    --button-height-small: 28px;
+    --button-big-margin: 16px;
+    --space-hairline: 2px;
+    --space-micro: 4px;
+    --space-tiny: 6px;
+    --space-between: 12px;
+    --space-between-small: 8px;
+    --space-vertical: 16px;
+    --space-title-hero: 32px;
+    --space-hero-margin: 32px;
+    --space-section-vert: 24px;
+    --card-margin: 16px;
+    --card-list-spacing: 10px;
+    --icon-tiny: 16px;
+    --icon-small: 20px;
+    --icon-medium: 24px;
+    --icon-hero: 40px;
+    --border-width-default: 1px;
+    --border-width-selected: 2px;
+    --icon-stroke-small: 1px;
+    --icon-stroke-bold: 2px;
+    --icon-stroke-hero: 3px;
+    --table-line-normal: 36px;
+    --table-line-big: 44px;
+    --page-form-width: 640px;
+    --page-sheet-width: 720px;
+
+    --radius: var(--radius-button);        /* base for the remaining var(--radius) refs */
+
+    /* Font weights — adopt progressively; Tailwind font-medium etc. NOT overridden.
+       --font-serif lives here (not only in @theme inline, which inlines values and
+       emits no runtime custom property) so var(--font-serif) resolves at runtime. */
+    --font-serif: Georgia, "Times New Roman", serif;
+    --weight-regular: 500;
+    --weight-medium: 600;
+    --weight-heavy: 700;
+}
+.dark {
+    /* ═══ Layer 2 · Semantic tokens (Dark) ═══ */
+    --surface-page: var(--ink-950);
+    --surface-header: var(--ink-950);
+    --surface: var(--ink-900);
+    --surface-card: var(--ink-900);
+    --surface-input: var(--ink-900);
+    --surface-popover: var(--ink-900);
+    --surface-hover: #fafafa1a;            /* ink/50 @ 10% */
+    --surface-secondary: #27272a;          /* zinc/800 */
+    --surface-tertiary: #27272a;           /* zinc/800 */
+    --surface-sidebar: var(--ink-900);
+    --text-primary: var(--ink-50);
+    --text-secondary: var(--ink-400);
+    --text-tertiary: var(--ink-600);
+    --text-inverted: var(--ink-950);
+    --text-popover: var(--ink-50);
+    --text-accent: #fafafa;                /* ACCENT — neutral/50 (inverts in dark) */
+    --text-on-accent: #171717;             /* ACCENT — neutral/900 (inverts in dark) */
+    --text-disabled: var(--ink-700);
+    --text-destructive: #ff6467;           /* red/400 */
+    --icon-primary: var(--ink-50);
+    --icon-accent: #fafafa;                /* ACCENT — neutral/50 */
+    --icon-inverted: var(--ink-950);
+    --icon-destructive: #ff6467;           /* red/400 */
+    --button-primary: #fafafa;             /* ACCENT — neutral/50 (inverts in dark) */
+    --button-secondary: #27272a;           /* zinc/800 */
+    --button-tertiary-foreground: var(--ink-50);
+    --button-destructive: #ff6467;         /* red/400 */
+    --button-select-state: #00598a;        /* sky/800 */
+    --secondary-accent: var(--ink-800);
+    --accent-color: var(--ink-50);
+    --accent-bold: var(--ink-50);          /* intentionally neutral in dark, not the accent */
+    --accent-secondary: var(--ink-50);
+    --border: #ffffff1a;                   /* white 10% */
+    --border-hover: #ffffff1a;             /* white 10% */
+    --input: #ffffff26;                    /* white 15% */
+    --border-focus-ring: var(--ink-500);
+    --border-selected: #0084d1;            /* sky/600 */
+    /* Workflow status — re-declared here because var() substitutes at the
+       DECLARING element: a :root-only alias keeps its light value inside a
+       nested .dark wrapper. */
+    --status-approved: #05df72;            /* green/400 */
+    --status-pending: #ffb900;             /* amber/400 */
+    --status-action: #ff8904;              /* orange/400 */
+    --status-rejected: var(--button-destructive);
+    --status-draft: var(--surface-secondary);
+    --status-expired: var(--ink-400);
+    --status-approved-soft: #032e15;       /* green/950 */
+    --status-pending-soft: #461901;        /* amber/950 */
+    --status-action-soft: #441306;         /* orange/950 */
+    --status-approved-border: #016630;     /* green/800 */
+    --status-pending-border: #973c00;      /* amber/800 */
+    --status-action-border: #9f2d00;       /* orange/800 */
+
+    /* ═══ Layer 3 · dark re-declarations ═══
+       Aliases whose Layer-2 targets flip are re-declared with the SAME var()
+       expression so they re-resolve at the .dark element — this is what makes
+       section-scoped dark wrappers (e.g. <section class="dark">) work; a
+       :root-only alias keeps its light value there. Plus dark values for
+       tokens with no semantic source. */
+    --background: var(--surface-page);
+    --foreground: var(--text-primary);
+    --card: var(--surface-card);
+    --card-foreground: var(--text-primary);
+    --popover: var(--surface-popover);
+    --popover-foreground: var(--text-popover);
+    --primary: var(--button-primary);
+    --secondary: var(--button-secondary);
+    --muted: var(--surface-secondary);
+    --muted-foreground: var(--text-secondary);
+    --accent: var(--button-primary);       /* deliberate: brand accent = primary */
+    --destructive: var(--button-destructive);
+    --ring: var(--border-focus-ring);
+    --secondary-foreground: #fafafa;       /* zinc/50 — no semantic source */
+    --primary-foreground: #171717;         /* neutral/900 — dark label on the light accent */
+    --accent-foreground: #171717;          /* neutral/900 — no semantic source */
+    --sidebar: var(--surface-sidebar);
+    --sidebar-foreground: var(--text-primary);
+    --sidebar-primary: var(--button-primary);
+    --sidebar-primary-foreground: var(--text-on-accent);
+    --sidebar-accent: var(--secondary-accent);
+    --sidebar-accent-foreground: var(--accent-color);
+    --sidebar-border: var(--border);
+    --sidebar-ring: var(--border-focus-ring);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) {
+      /* ═══ Layer 2 · Semantic tokens (Dark) ═══ */
+      --surface-page: var(--ink-950);
+      --surface-header: var(--ink-950);
+      --surface: var(--ink-900);
+      --surface-card: var(--ink-900);
+      --surface-input: var(--ink-900);
+      --surface-popover: var(--ink-900);
+      --surface-hover: #fafafa1a;            /* ink/50 @ 10% */
+      --surface-secondary: #27272a;          /* zinc/800 */
+      --surface-tertiary: #27272a;           /* zinc/800 */
+      --surface-sidebar: var(--ink-900);
+      --text-primary: var(--ink-50);
+      --text-secondary: var(--ink-400);
+      --text-tertiary: var(--ink-600);
+      --text-inverted: var(--ink-950);
+      --text-popover: var(--ink-50);
+      --text-accent: #fafafa;                /* ACCENT — neutral/50 (inverts in dark) */
+      --text-on-accent: #171717;             /* ACCENT — neutral/900 (inverts in dark) */
+      --text-disabled: var(--ink-700);
+      --text-destructive: #ff6467;           /* red/400 */
+      --icon-primary: var(--ink-50);
+      --icon-accent: #fafafa;                /* ACCENT — neutral/50 */
+      --icon-inverted: var(--ink-950);
+      --icon-destructive: #ff6467;           /* red/400 */
+      --button-primary: #fafafa;             /* ACCENT — neutral/50 (inverts in dark) */
+      --button-secondary: #27272a;           /* zinc/800 */
+      --button-tertiary-foreground: var(--ink-50);
+      --button-destructive: #ff6467;         /* red/400 */
+      --button-select-state: #00598a;        /* sky/800 */
+      --secondary-accent: var(--ink-800);
+      --accent-color: var(--ink-50);
+      --accent-bold: var(--ink-50);          /* intentionally neutral in dark, not the accent */
+      --accent-secondary: var(--ink-50);
+      --border: #ffffff1a;                   /* white 10% */
+      --border-hover: #ffffff1a;             /* white 10% */
+      --input: #ffffff26;                    /* white 15% */
+      --border-focus-ring: var(--ink-500);
+      --border-selected: #0084d1;            /* sky/600 */
+      /* Workflow status — re-declared here because var() substitutes at the
+         DECLARING element: a :root-only alias keeps its light value inside a
+         nested .dark wrapper. */
+      --status-approved: #05df72;            /* green/400 */
+      --status-pending: #ffb900;             /* amber/400 */
+      --status-action: #ff8904;              /* orange/400 */
+      --status-rejected: var(--button-destructive);
+      --status-draft: var(--surface-secondary);
+      --status-expired: var(--ink-400);
+      --status-approved-soft: #032e15;       /* green/950 */
+      --status-pending-soft: #461901;        /* amber/950 */
+      --status-action-soft: #441306;         /* orange/950 */
+      --status-approved-border: #016630;     /* green/800 */
+      --status-pending-border: #973c00;      /* amber/800 */
+      --status-action-border: #9f2d00;       /* orange/800 */
+  
+      /* ═══ Layer 3 · dark re-declarations ═══
+         Aliases whose Layer-2 targets flip are re-declared with the SAME var()
+         expression so they re-resolve at the .dark element — this is what makes
+         section-scoped dark wrappers (e.g. <section class="dark">) work; a
+         :root-only alias keeps its light value there. Plus dark values for
+         tokens with no semantic source. */
+      --background: var(--surface-page);
+      --foreground: var(--text-primary);
+      --card: var(--surface-card);
+      --card-foreground: var(--text-primary);
+      --popover: var(--surface-popover);
+      --popover-foreground: var(--text-popover);
+      --primary: var(--button-primary);
+      --secondary: var(--button-secondary);
+      --muted: var(--surface-secondary);
+      --muted-foreground: var(--text-secondary);
+      --accent: var(--button-primary);       /* deliberate: brand accent = primary */
+      --destructive: var(--button-destructive);
+      --ring: var(--border-focus-ring);
+      --secondary-foreground: #fafafa;       /* zinc/50 — no semantic source */
+      --primary-foreground: #171717;         /* neutral/900 — dark label on the light accent */
+      --accent-foreground: #171717;          /* neutral/900 — no semantic source */
+      --sidebar: var(--surface-sidebar);
+      --sidebar-foreground: var(--text-primary);
+      --sidebar-primary: var(--button-primary);
+      --sidebar-primary-foreground: var(--text-on-accent);
+      --sidebar-accent: var(--secondary-accent);
+      --sidebar-accent-foreground: var(--accent-color);
+      --sidebar-border: var(--border);
+      --sidebar-ring: var(--border-focus-ring);
+  }
+}
+
+*{box-sizing:border-box;margin:0}
+body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--surface-page);color:var(--text-primary);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--border-focus-ring);outline-offset:2px}
+.frame{background:var(--surface-page);color:var(--text-primary)}
+
+
+.stages{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-vertical);padding:var(--space-hero-margin) var(--card-margin);max-width:1100px;margin:0 auto}
+@media (max-width:760px){.stages{grid-template-columns:1fr}}
+.stage{display:flex;flex-direction:column;gap:var(--space-between-small)}
+figcaption{font-size:13px;font-weight:var(--weight-medium);color:var(--text-secondary)}
+.tool{position:relative;height:520px;border:var(--border-width-default) solid var(--border);border-radius:var(--radius-card);overflow:hidden}
+.panel{position:absolute;inset:0;display:flex;justify-content:center;padding-top:var(--space-section-vert);font-size:13px;color:var(--text-secondary)}
+.pill{position:absolute;left:var(--card-margin);bottom:var(--card-margin);display:flex;flex-direction:column;align-items:flex-start;gap:var(--space-between-small)}
+.trigger{display:inline-flex;align-items:center;gap:var(--space-between-small);min-height:var(--control-height-big);padding:0 var(--space-between) 0 var(--space-between);border-radius:var(--radius-rounded);background:var(--surface-popover);color:var(--text-popover);border:var(--border-width-default) solid var(--border);font:inherit;font-size:15px;font-weight:var(--weight-medium);transition:background-color var(--motion-fast) var(--motion-ease-standard)}
+.trigger:hover{background:var(--surface-secondary)}
+.menu{width:min(320px,calc(100vw - 64px));background:var(--surface-popover);color:var(--text-popover);border:var(--border-width-default) solid var(--border);border-radius:var(--radius-card);padding:var(--space-micro)}
+.menu ul{list-style:none;padding:0}
+.item{display:grid;grid-template-columns:20px 1fr auto;align-items:center;gap:var(--space-between-small);min-height:var(--control-height-big);padding:var(--space-micro) var(--space-between);border-radius:var(--radius-button);text-decoration:none;color:var(--text-popover);font-size:15px;transition:background-color var(--motion-fast) var(--motion-ease-standard)}
+a.item:hover{background:var(--surface-hover)}
+.n{font-size:13px;color:var(--text-secondary);text-align:center}
+.m{font-size:13px;color:var(--text-secondary)}
+.cur{background:var(--surface-secondary);font-weight:var(--weight-medium)}
+.cur .m{color:var(--text-primary)}
+.off{color:var(--text-secondary);cursor:default}
+.sep{height:var(--border-width-default);background:var(--border);margin:var(--space-micro) var(--space-between-small)}
+
+</style>
+</head>
+<body>
+<main class="stages">
+
+  <figure class="stage">
+    <figcaption>Closed</figcaption>
+    <div class="frame dark tool">
+      <div class="panel"><span>Tool page (stand-in)</span></div>
+      <div class="pill">
+        
+        <button class="trigger" type="button" aria-expanded="false" aria-controls="menu"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>Suite</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 15 6-6 6 6"/></svg></button>
+      </div>
+    </div>
+  </figure>
+
+  <figure class="stage">
+    <figcaption>Open, ScriptBreak is the current tool</figcaption>
+    <div class="frame dark tool">
+      <div class="panel"><span>Tool page (stand-in)</span></div>
+      <div class="pill">
+        <nav class="menu" id="menu" aria-label="AI Studio Suite tools">
+        <ul>
+          <li><a class="item" href="/"><span class="n" aria-hidden="true"></span><span class="t">Home</span></a></li>
+          <li class="sep" role="presentation"></li>
+          <li><a class="item" href="/cork-board/"><span class="n">1</span><span class="t">Cork Board</span></a></li><li><a class="item cur" href="/scriptbreak/" aria-current="page"><span class="n">2</span><span class="t">ScriptBreak</span><span class="m">Current</span></a></li><li><span class="item off" aria-disabled="true"><span class="n">3</span><span class="t">Slate</span><span class="m">desktop only</span></span></li><li><span class="item off" aria-disabled="true"><span class="n">4</span><span class="t">Storyboard Reference Studio</span><span class="m">desktop only</span></span></li><li><span class="item off" aria-disabled="true"><span class="n">5</span><span class="t">Motion Previs Studio</span><span class="m">desktop only</span></span></li><li><span class="item off" aria-disabled="true"><span class="n">6</span><span class="t">Blockout</span><span class="m">desktop only</span></span></li>
+        </ul>
+      </nav>
+        <button class="trigger" type="button" aria-expanded="true" aria-controls="menu"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>Suite</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+      </div>
+    </div>
+  </figure>
+</main>
+</body>
+</html>
