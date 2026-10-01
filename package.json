@@ -1,0 +1,20 @@
+{
+  "name": "ai-studio-suite",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=24" },
+  "workspaces": ["apps/*", "packages/*"],
+  "scripts": {
+    "test": "node --test \"scripts/lib/*.test.mjs\"",
+    "test:e2e": "playwright test",
+    "build": "node scripts/build.mjs",
+    "build:local": "node scripts/build.mjs --local",
+    "serve": "node scripts/serve.mjs dist 4170",
+    "dev": "node scripts/dev.mjs",
+    "pin": "node scripts/pin.mjs",
+    "sync-ui": "node scripts/sync-ui.mjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0"
+  }
+}
