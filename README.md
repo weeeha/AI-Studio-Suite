@@ -2,7 +2,7 @@
 
 Personal fork of the Wasserman Productions AI-filmmaking tools, restyled on the Minimal Design System (`@weeeha/ui`) and tailored to Nick's workflow.
 
-**Status:** exploration · **Live:** none yet (local only) · **Started:** 2026-09-30
+**Status:** exploration · **Live:** https://ai-studio-suite-eta.vercel.app (Vercel login required; Cork Board + ScriptBreak) · **Started:** 2026-09-30
 
 ## Repo map
 
