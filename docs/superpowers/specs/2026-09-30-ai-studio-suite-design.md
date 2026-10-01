@@ -62,7 +62,7 @@ forks/              local working clones (gitignored)
 | `motion` | Motion Previs Studio | `/motion/` | `weeeha/motion-previs-studio` | `npm run build` (existing: already a plain Vite renderer build with `base: './'`) | `dist` |
 | `blockout` | Blockout | `/blockout/` | `weeeha/blockout` | `npm run build:web` (new) | `dist-web` |
 
-Each entry also records a dev port (5171 to 5176) and a dev command that accepts `--base /<path>/`.
+Each entry also records a dev port (5171 to 5176), a dev command that accepts `--base /<path>/`, and `theme` (`light` for Cork Board, `dark` for the rest) so the pill matches the tool it sits in.
 
 ### 4.3 Build (`scripts/build.mjs`)
 
@@ -83,7 +83,7 @@ Web builds use `base: './'` so one output works under any path, on localhost, an
 
 ### 4.5 Local dev (`scripts/dev.mjs`)
 
-- `npm run dev` starts each tool's dev server with `--base /<path>/` on its port, the home on 5177, and a gateway on **http://localhost:5170** that proxies each path (WebSockets included, for hot reload). ScriptBreak is served as static files.
+- `npm run dev` starts each tool's dev server with `--host 127.0.0.1 --base /<path>/` on its port, and serves the home itself as the gateway on **http://localhost:5170**, proxying each tool path (WebSockets included, for hot reload). ScriptBreak runs on the suite's own Vite as static files. The pill is injected at build time only, so it appears in `npm run build:local` + `npm run serve` and on Vercel, not in `npm run dev`.
 - Same paths and same origin as production, so storage and hand-offs behave the same.
 - The desktop apps still run from `forks/<repo>` for ffmpeg exports and MCP.
 
