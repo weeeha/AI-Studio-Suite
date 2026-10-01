@@ -6,6 +6,7 @@ export const MAX_OUTPUT = { fast: 1024, standard: 2048, top: 4096 }
 export const LIMITS = { promptChars: 120000, images: 8, imageBytes: 5000000 }
 
 const IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/gif'])
+const TAG = /^[a-z0-9-]{1,40}$/
 const json = (status, data) => Response.json(data, { status })
 
 export function allowedHost(hostname) {
@@ -18,7 +19,10 @@ export function validate(body) {
   for (const [name, value] of Object.entries({ tool, task, system, prompt })) {
     if (typeof value !== 'string') return { ok: false, error: `${name} must be a string.` }
   }
-  if (!(tier in MODELS)) return { ok: false, error: 'tier must be fast, standard or top.' }
+  for (const name of ['tool', 'task']) {
+    if (!TAG.test(body[name])) return { ok: false, error: `${name} must be 1-40 characters of a-z, 0-9 or -.` }
+  }
+  if (typeof tier !== 'string' || !Object.hasOwn(MODELS, tier)) return { ok: false, error: 'tier must be fast, standard or top.' }
   if (system.length + prompt.length > LIMITS.promptChars) return { ok: false, error: 'Prompt is too long.' }
   if (!Array.isArray(images) || images.length > LIMITS.images) return { ok: false, error: `At most ${LIMITS.images} images.` }
   for (const img of images) {

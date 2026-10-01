@@ -68,6 +68,31 @@ test('invalid JSON and invalid fields return 400', async () => {
   assert.equal((await handle(post(body({ tier: 'x' })), { generate: async () => ({ text: '' }) })).status, 400)
 })
 
+test('inherited object keys are not tiers', async () => {
+  for (const tier of ['constructor', 'toString', '__proto__']) {
+    let called = false
+    const res = await handle(post(body({ tier })), { generate: async () => { called = true; return { text: '' } } })
+    assert.equal(res.status, 400, tier)
+    assert.equal((await res.json()).error, 'tier must be fast, standard or top.')
+    assert.equal(called, false, tier)
+  }
+})
+
+test('tool and task must be 1-40 characters of a-z, 0-9 or -', async () => {
+  const cases = [
+    ['tool', 'Slate Pro', 'tool must be 1-40 characters of a-z, 0-9 or -.'],
+    ['task', 'x'.repeat(41), 'task must be 1-40 characters of a-z, 0-9 or -.'],
+  ]
+  for (const [field, value, message] of cases) {
+    let called = false
+    const res = await handle(post(body({ [field]: value })), { generate: async () => { called = true; return { text: '' } } })
+    assert.equal(res.status, 400, field)
+    assert.equal((await res.json()).error, message)
+    assert.equal(called, false, field)
+  }
+  assert.equal(validate(body({ task: 'x'.repeat(40) })).ok, true)
+})
+
 test('gateway budget and rate errors become plain messages', async () => {
   const fail = (statusCode) => async () => { const e = new Error('upstream'); e.statusCode = statusCode; throw e }
   const r402 = await handle(post(body()), { generate: fail(402) })
