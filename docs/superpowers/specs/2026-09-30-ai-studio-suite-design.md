@@ -206,7 +206,8 @@ interface InboxItem {
 ### 7.4 0c: AI
 
 - **One route:** `/api/ai` (Vercel Function, AI Gateway, model as a `provider/model` string) serves Blockout reference analysis, Storyboard vision prompts, and Slate's brain.
-- **Passphrase:** checked server-side, stored per browser after first entry, 401 without it.
+- **Access (amended 2026-10-01, Plan 3 D1):** no passphrase. The route sits behind the site's Vercel Authentication and also refuses any host that is not `*.vercel.app`, `localhost` or `127.0.0.1`; Nick sets an AI Gateway monthly hard limit.
+- **Models (Plan 3 D2):** fast `anthropic/claude-haiku-4.5`, standard `anthropic/claude-sonnet-5.5`, top `anthropic/claude-opus-5.5`.
 - **Local only:** Slate can reach a local model server when served from localhost.
 
 ### 7.5 Stays desktop-only
