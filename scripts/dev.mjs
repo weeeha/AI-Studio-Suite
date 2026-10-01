@@ -10,10 +10,12 @@ import { handle } from '../api/_lib/brain.js'
 import { toWebRequest, sendWebResponse } from './lib/node-web.mjs'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
+// Child dev servers get the env as it was before .env.local, so AI_GATEWAY_API_KEY / VERCEL_OIDC_TOKEN stay in this process only.
+const childEnvBase = { ...process.env }
 if (existsSync(join(root, '.env.local'))) process.loadEnvFile(join(root, '.env.local'))
 const { tools } = await loadRegistry(root)
 const enabled = enabledTools(tools)
-const env = { ...process.env, ELECTRON_SKIP_BINARY_DOWNLOAD: '1', PATH: `${join(root, 'node_modules/.bin')}:${process.env.PATH}` }
+const env = { ...childEnvBase, ELECTRON_SKIP_BINARY_DOWNLOAD: '1', PATH: `${join(root, 'node_modules/.bin')}:${childEnvBase.PATH}` }
 const children = []
 let server
 let stopping = false
@@ -55,9 +57,22 @@ try {
       name: 'suite-api-ai',
       configureServer(server) {
         server.middlewares.use('/api/ai', async (req, res) => {
-          req.url = '/api/ai' + (req.url === '/' ? '' : req.url)
-          const response = await handle(await toWebRequest(req, 'http://localhost:5170'), { generate: generateText })
-          await sendWebResponse(res, response)
+          try {
+            req.url = '/api/ai' + (req.url === '/' ? '' : req.url)
+            // Real Host header so the route's host guard sees what a browser sent; cancel the model call when the client goes away.
+            const ctrl = new AbortController()
+            res.on('close', () => { if (!res.writableFinished) ctrl.abort() })
+            const request = await toWebRequest(req, `http://${req.headers.host ?? 'localhost:5170'}`)
+            const response = await handle(new Request(request, { signal: ctrl.signal }), { generate: generateText })
+            await sendWebResponse(res, response)
+          } catch (e) {
+            console.error('ai route (dev)', e?.name)
+            if (!res.headersSent) {
+              res.statusCode = 500
+              res.setHeader('content-type', 'application/json')
+            }
+            res.end(JSON.stringify({ ok: false, error: 'The AI request failed.' }))
+          }
         })
       },
     }],

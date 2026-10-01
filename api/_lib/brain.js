@@ -6,6 +6,7 @@ export const MAX_OUTPUT = { fast: 1024, standard: 2048, top: 4096 }
 export const LIMITS = { promptChars: 120000, images: 8, imageBytes: 5000000 }
 
 const IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/gif'])
+const BASE64 = /^[A-Za-z0-9+/]+={0,2}$/
 const TAG = /^[a-z0-9-]{1,40}$/
 const json = (status, data) => Response.json(data, { status })
 
@@ -23,10 +24,13 @@ export function validate(body) {
     if (!TAG.test(body[name])) return { ok: false, error: `${name} must be 1-40 characters of a-z, 0-9 or -.` }
   }
   if (typeof tier !== 'string' || !Object.hasOwn(MODELS, tier)) return { ok: false, error: 'tier must be fast, standard or top.' }
+  if (prompt.trim() === '') return { ok: false, error: 'prompt must not be empty.' }
   if (system.length + prompt.length > LIMITS.promptChars) return { ok: false, error: 'Prompt is too long.' }
   if (!Array.isArray(images) || images.length > LIMITS.images) return { ok: false, error: `At most ${LIMITS.images} images.` }
   for (const img of images) {
     if (!img || typeof img.data !== 'string' || !IMAGE_TYPES.has(img.mediaType)) return { ok: false, error: 'Unsupported image type.' }
+    // Plain base64 only: the SDK treats an https: or data: string as a URL and downloads it, which would skip the size cap.
+    if (img.data.length % 4 !== 0 || !BASE64.test(img.data)) return { ok: false, error: 'Image data must be base64.' }
     if (Math.floor((img.data.length * 3) / 4) > LIMITS.imageBytes) return { ok: false, error: 'An image is too large.' }
   }
   return { ok: true, req: { tool, task, system, prompt, tier, images } }
@@ -39,8 +43,11 @@ export function toMessages(req) {
 }
 
 function upstreamError(e) {
-  if (e?.statusCode === 402) return json(402, { ok: false, error: 'AI budget limit reached.' })
-  if (e?.statusCode === 429) return json(429, { ok: false, error: 'Too many AI requests right now. Try again in a minute.' })
+  // generateText wraps retried failures in a RetryError whose lastError carries the status.
+  const status = e?.statusCode ?? e?.lastError?.statusCode
+  console.error('ai route', e?.name, status)
+  if (status === 402) return json(402, { ok: false, error: 'AI budget limit reached.' })
+  if (status === 429) return json(429, { ok: false, error: 'Too many AI requests right now. Try again in a minute.' })
   return json(502, { ok: false, error: 'The AI request failed.' })
 }
 
@@ -50,6 +57,10 @@ export async function handle(request, { generate, now = Date.now }) {
   if (request.method === 'GET') return json(200, { ok: true, provider: 'ai-gateway', models: MODELS })
   if (request.method !== 'POST') return json(405, { ok: false, error: 'Use GET or POST.' })
 
+  // Requiring JSON makes a cross-origin browser call send a CORS preflight first.
+  if (!(request.headers.get('content-type') ?? '').toLowerCase().startsWith('application/json')) {
+    return json(415, { ok: false, error: 'Content-Type must be application/json.' })
+  }
   let body
   try { body = await request.json() } catch { return json(400, { ok: false, error: 'Body must be valid JSON.' }) }
   const v = validate(body)
@@ -57,15 +68,16 @@ export async function handle(request, { generate, now = Date.now }) {
 
   const started = now()
   try {
-    const { text, usage } = await generate({
+    const { text, usage, finishReason } = await generate({
       model: MODELS[v.req.tier],
       system: v.req.system,
       messages: toMessages(v.req),
       maxOutputTokens: MAX_OUTPUT[v.req.tier],
+      maxRetries: 0, // the SDK default of 2 retries hides 429s behind a RetryError and triples gateway attempts
       abortSignal: request.signal,
       providerOptions: { gateway: { tags: [`tool:${v.req.tool}`, `task:${v.req.task}`] } },
     })
-    return json(200, { ok: true, text, usage, elapsedMs: now() - started })
+    return json(200, { ok: true, text, usage, finishReason, elapsedMs: now() - started })
   } catch (e) {
     return upstreamError(e)
   }

@@ -63,7 +63,7 @@ test('POST from a disallowed host is refused before any model call', async () =>
 })
 
 test('invalid JSON and invalid fields return 400', async () => {
-  const bad = new Request('https://x.vercel.app/api/ai', { method: 'POST', body: '{nope' })
+  const bad = new Request('https://x.vercel.app/api/ai', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{nope' })
   assert.equal((await handle(bad, { generate: async () => ({ text: '' }) })).status, 400)
   assert.equal((await handle(post(body({ tier: 'x' })), { generate: async () => ({ text: '' }) })).status, 400)
 })
@@ -109,4 +109,60 @@ test('gateway budget and rate errors become plain messages', async () => {
 test('other methods are 405', async () => {
   const res = await handle(new Request('https://x.vercel.app/api/ai', { method: 'DELETE' }), { generate: async () => ({ text: '' }) })
   assert.equal(res.status, 405)
+})
+
+test('a RetryError-shaped 429 maps to the rate-limit message and generate is told not to retry', async () => {
+  let calls = 0
+  let seen
+  const generate = async (opts) => {
+    calls++
+    seen = opts
+    const e = new Error('retry')
+    e.name = 'RetryError'
+    e.statusCode = undefined
+    e.lastError = { statusCode: 429 }
+    throw e
+  }
+  const res = await handle(post(body()), { generate })
+  assert.equal(res.status, 429)
+  assert.deepEqual(await res.json(), { ok: false, error: 'Too many AI requests right now. Try again in a minute.' })
+  assert.equal(calls, 1)
+  assert.equal(seen.maxRetries, 0)
+})
+
+test('image data must be plain base64, never a URL', () => {
+  for (const data of ['https://example.com/huge.png', 'data:image/png;base64,AAAA', 'AAA', 'AA==AA==', '']) {
+    assert.match(validate(body({ images: [{ data, mediaType: 'image/png' }] })).error, /image|base64/i, data)
+  }
+  assert.equal(validate(body({ images: [{ data: 'QUJD', mediaType: 'image/png' }, { data: 'QUI=', mediaType: 'image/png' }] })).ok, true)
+})
+
+test('empty prompts are rejected before any model call', async () => {
+  let called = false
+  const res = await handle(post(body({ prompt: '  ' })), { generate: async () => { called = true; return { text: '' } } })
+  assert.equal(res.status, 400)
+  assert.equal(called, false)
+})
+
+test('POST without a JSON content-type is refused', async () => {
+  let called = false
+  const req = new Request('https://x.vercel.app/api/ai', { method: 'POST', headers: { 'content-type': 'text/plain' }, body: JSON.stringify(body()) })
+  const res = await handle(req, { generate: async () => { called = true; return { text: '' } } })
+  assert.equal(res.status, 415)
+  assert.equal(called, false)
+})
+
+test('finishReason is returned so callers can detect truncation', async () => {
+  const res = await handle(post(body()), { generate: async () => ({ text: '{"a":', usage: {}, finishReason: 'length' }) })
+  assert.equal((await res.json()).finishReason, 'length')
+})
+
+test('upstream failures are logged by name and status only, never content', async () => {
+  const logged = []
+  const orig = console.error
+  console.error = (...a) => logged.push(a)
+  try {
+    await handle(post(body({ prompt: 'secret prompt text' })), { generate: async () => { const e = new Error('secret prompt text'); e.name = 'GatewayAuthenticationError'; e.statusCode = 401; throw e } })
+  } finally { console.error = orig }
+  assert.deepEqual(logged, [['ai route', 'GatewayAuthenticationError', 401]])
 })

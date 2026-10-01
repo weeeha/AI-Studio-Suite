@@ -169,12 +169,14 @@ test('Slate Break Down renders the element sheet from the route and sends a well
   await expect(page.getByText('35mm')).toBeVisible()
   await expect(page.getByText('soft key')).toBeVisible()
   expect(posts).toHaveLength(1)
-  const body = posts[0] as { tool: string; system: string; tier: string; images: Array<{ mediaType: string }> }
+  const body = posts[0] as { tool: string; system: string; tier: string; images: Array<{ mediaType: string; data: string }> }
   expect(body.tool).toBe('slate')
   expect(typeof body.system).toBe('string')
   expect(body.system.length).toBeGreaterThan(0)
   expect(['fast', 'standard', 'top']).toContain(body.tier)
   expect(body.images).toHaveLength(1)
-  expect(body.images[0].mediaType).toBe('image/png')
+  // Stills are re-encoded to JPEG before sending, so they fit the route's size limits.
+  expect(body.images[0].mediaType).toBe('image/jpeg')
+  expect(body.images[0].data).toMatch(/^[A-Za-z0-9+/]+={0,2}$/)
   expect(errors).toEqual([])
 })
