@@ -5,7 +5,7 @@ import { loadRegistry, validateRegistry, enabledTools, fillCommand } from './reg
 
 const tool = (over = {}) => ({
   id: 'cork', name: 'Cork Board', blurb: 'b', path: '/cork/', repo: 'weeeha/cork-board',
-  fork: 'cork-board', enabled: true, theme: 'dark', build: 'npm run build', out: 'dist', devPort: 5171,
+  fork: 'cork-board', enabled: true, theme: 'dark', pillCorner: 'bottom-left', build: 'npm run build', out: 'dist', devPort: 5171,
   dev: 'npm run dev -- --port {port} --base {path}', ...over,
 })
 const lockFor = (tools) => Object.fromEntries(tools.map(t => [t.id, { repo: t.repo, sha: 'a'.repeat(40) }]))
@@ -41,6 +41,15 @@ test('every tool needs a lock entry with a 40-hex sha and the same repo', () => 
 test('theme must be light or dark', () => {
   const tools = [tool({ theme: 'sepia' })]
   assert.ok(validateRegistry(tools, lockFor(tools)).some(e => e.includes('bad theme for cork')))
+})
+
+test('pillCorner must be bottom-left or bottom-right', () => {
+  for (const pillCorner of ['top-left', undefined]) {
+    const tools = [tool({ pillCorner })]
+    assert.ok(validateRegistry(tools, lockFor(tools)).some(e => e.includes('bad pillCorner for cork')), String(pillCorner))
+  }
+  const ok = [tool({ pillCorner: 'bottom-right' })]
+  assert.deepEqual(validateRegistry(ok, lockFor(ok)), [])
 })
 
 test('enabledTools keeps order and drops disabled tools', () => {

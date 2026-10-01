@@ -17,6 +17,7 @@ export function validateRegistry(tools, lock) {
     }
     if (!/^\/[a-z0-9-]+\/$/.test(t.path)) errors.push(`bad path ${t.path}`)
     if (t.theme !== 'light' && t.theme !== 'dark') errors.push(`bad theme for ${t.id}`)
+    if (t.pillCorner !== 'bottom-left' && t.pillCorner !== 'bottom-right') errors.push(`bad pillCorner for ${t.id}`)
     const entry = lock[t.id]
     if (!entry) { errors.push(`no lock entry for ${t.id}`); continue }
     if (!/^[0-9a-f]{40}$/.test(entry.sha)) errors.push(`bad sha for ${t.id}`)

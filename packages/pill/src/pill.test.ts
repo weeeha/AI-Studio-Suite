@@ -1,14 +1,20 @@
 import { currentTool, hrefTo, mountPill, type PillTool } from './pill'
 
 const tools: PillTool[] = [
-  { id: 'cork', name: 'Cork Board', path: '/cork/', enabled: true, theme: 'light' },
-  { id: 'script', name: 'ScriptBreak', path: '/script/', enabled: true, theme: 'dark' },
-  { id: 'slate', name: 'Slate', path: '/slate/', enabled: false, theme: 'dark' },
+  { id: 'cork', name: 'Cork Board', path: '/cork/', enabled: true, theme: 'light', pillCorner: 'bottom-left' },
+  { id: 'script', name: 'ScriptBreak', path: '/script/', enabled: true, theme: 'dark', pillCorner: 'bottom-right' },
+  { id: 'slate', name: 'Slate', path: '/slate/', enabled: false, theme: 'dark', pillCorner: 'bottom-left' },
 ]
 
 test('takes the theme of the tool it sits in', () => {
   expect(mountPill({ tools, pathname: '/cork/' }).dataset.theme).toBe('light')
   expect(mountPill({ tools, pathname: '/script/' }).dataset.theme).toBe('dark')
+})
+
+test('takes its corner from the tool it sits in, defaulting to bottom-left', () => {
+  expect(mountPill({ tools, pathname: '/cork/' }).dataset.corner).toBe('bottom-left')
+  expect(mountPill({ tools, pathname: '/script/' }).dataset.corner).toBe('bottom-right')
+  expect(mountPill({ tools, pathname: '/' }).dataset.corner).toBe('bottom-left')
 })
 
 test('currentTool matches the first path segment', () => {

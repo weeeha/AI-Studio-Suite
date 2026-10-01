@@ -18,6 +18,11 @@
   --pill-current: #f5f5f5;      /* ds: surface-secondary = base-100 */
   --pill-ring: #a1a1aa;         /* ds: border-focus-ring = ink-400 */
 }
+:host([data-corner="bottom-right"]) {
+  left: auto;
+  right: 12px;
+  align-items: flex-end;        /* menu anchors to the right edge, never runs off-screen */
+}
 :host([data-theme="dark"]) {
   --pill-surface: #18181b;      /* ds: surface-popover (dark) = ink-900 */
   --pill-text: #fafafa;         /* ds: text-popover = ink-50 */
