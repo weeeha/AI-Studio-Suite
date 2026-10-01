@@ -5,6 +5,7 @@ import { execSync } from 'node:child_process'
 import { loadRegistry, validateRegistry, enabledTools } from './lib/registry.mjs'
 import { sourceDir } from './lib/source.mjs'
 import { injectPill, pillSrcFor } from './lib/html.mjs'
+import { copyLicenses } from './lib/licenses.mjs'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
 const local = process.argv.includes('--local')
@@ -37,6 +38,7 @@ for (const tool of enabledTools(tools).filter(t => !only || t.id === only)) {
   }
   const target = join(dist, tool.path)
   cpSync(join(src, tool.out), target, { recursive: true })
+  copyLicenses(src, target)
   if (pillBuilt) {
     const index = join(target, 'index.html')
     writeFileSync(index, injectPill(readFileSync(index, 'utf8'), pillSrcFor(tool.path)))

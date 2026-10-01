@@ -9,3 +9,13 @@ test('home lists the pipeline and opens Cork Board', async ({ page }) => {
   await expect(page).toHaveURL(/\/cork\/$/)
   expect(errors).toEqual([])
 })
+
+test('each tool ships its fork LICENSE and NOTICE', async ({ request }) => {
+  for (const path of ['/cork/', '/script/']) {
+    const license = await request.get(`${path}LICENSE`)
+    expect(license.ok(), `${path}LICENSE`).toBe(true)
+    expect(await license.text()).toContain('Apache License')
+  }
+  const notice = await request.get('/cork/NOTICE')
+  expect(notice.ok(), '/cork/NOTICE').toBe(true)
+})
