@@ -28,3 +28,15 @@ test('serves files and reports missing ones', () => {
 test('refuses to leave the root', () => {
   assert.deepEqual(resolveRequest(root, '/../etc/passwd'), { kind: 'missing' })
 })
+
+test('treats a malformed percent escape as missing instead of throwing', () => {
+  assert.deepEqual(resolveRequest(root, '/%E0%A4%A'), { kind: 'missing' })
+})
+
+test('keeps the query string after the slash when redirecting', () => {
+  assert.deepEqual(resolveRequest(root, '/cork?x=1'), { kind: 'redirect', location: '/cork/?x=1' })
+})
+
+test('collapses leading slashes so a redirect never becomes protocol-relative', () => {
+  assert.deepEqual(resolveRequest(root, '//cork'), { kind: 'redirect', location: '/cork/' })
+})
