@@ -5,8 +5,12 @@ import { fileURLToPath } from 'node:url'
 import { createServer } from 'vite'
 import { loadRegistry, enabledTools, fillCommand } from './lib/registry.mjs'
 import { proxyTable } from './lib/proxy.mjs'
+import { generateText } from 'ai'
+import { handle } from '../api/_lib/brain.js'
+import { toWebRequest, sendWebResponse } from './lib/node-web.mjs'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
+if (existsSync(join(root, '.env.local'))) process.loadEnvFile(join(root, '.env.local'))
 const { tools } = await loadRegistry(root)
 const enabled = enabledTools(tools)
 const env = { ...process.env, ELECTRON_SKIP_BINARY_DOWNLOAD: '1', PATH: `${join(root, 'node_modules/.bin')}:${process.env.PATH}` }
@@ -47,6 +51,16 @@ try {
     root: join(root, 'apps/home'),
     configFile: join(root, 'apps/home/vite.config.ts'),
     server: { port: 5170, strictPort: true, proxy: proxyTable(enabled) },
+    plugins: [{
+      name: 'suite-api-ai',
+      configureServer(server) {
+        server.middlewares.use('/api/ai', async (req, res) => {
+          req.url = '/api/ai' + (req.url === '/' ? '' : req.url)
+          const response = await handle(await toWebRequest(req, 'http://localhost:5170'), { generate: generateText })
+          await sendWebResponse(res, response)
+        })
+      },
+    }],
   })
   await server.listen()
   console.log('suite on http://localhost:5170  ' + enabled.map(t => t.path).join('  '))
