@@ -119,7 +119,7 @@ A small floating control in every tool, injected at build time.
 
 - **Contents:** Home, tool switcher (pipeline order), inbox count.
 - **Shadow DOM** keeps its CSS and the tool's CSS from leaking into each other.
-- **Floating, not a bar**, so no tool layout shifts.
+- **Floating, not a bar**, so no tool layout shifts. The corner is per tool (`pillCorner` in `tools.json`, bottom-left by default) so it never covers a tool's own controls or its credit to Sam Wasserman; ScriptBreak uses bottom-right because its sidebar credit sits bottom-left.
 - Drafted with the home.
 - It also installs the runtime contract the adapters use:
 
