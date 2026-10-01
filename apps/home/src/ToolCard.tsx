@@ -1,5 +1,5 @@
 import { Button } from '@weeeha/ui/components/button'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader } from '@weeeha/ui/components/card'
+import { Card, CardDescription, CardFooter, CardHeader } from '@weeeha/ui/components/card'
 import type { SuiteTool } from './App'
 
 export function ToolCard({ tool, step }: { tool: SuiteTool; step: number }) {
@@ -25,7 +25,6 @@ export function ToolCard({ tool, step }: { tool: SuiteTool; step: number }) {
           <CardDescription className="text-text-secondary">{tool.blurb}</CardDescription>
         </div>
       </CardHeader>
-      <CardContent className="hidden" />
       <CardFooter className="shrink-0 gap-3 border-t-0 bg-transparent p-0 pl-14 sm:justify-end sm:pr-(--card-spacing) sm:pl-0">
         {tool.enabled ? (
           <Button asChild size="lg" className="px-4 text-sm">
