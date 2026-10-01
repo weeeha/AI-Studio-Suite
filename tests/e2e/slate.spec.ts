@@ -42,6 +42,7 @@ test.beforeEach(async ({ page }) => {
 test('Slate creates a project that survives a reload, and the pill stays clear', async ({ page }) => {
   const errors = watchErrors(page)
   await page.goto('/slate/')
+  await expect(page.getByPlaceholder('New project title — e.g. Night Market')).toBeVisible()
   await expectPillClear(page)
   await page.getByPlaceholder('New project title — e.g. Night Market').fill('Smoke Market')
   await page.getByRole('button', { name: 'Create Project' }).click()
@@ -95,5 +96,32 @@ test('Slate copies the Markdown shot list (clipboard export)', async ({ page }) 
   const copied = await page.evaluate(() => (window as unknown as { __copied: string[] }).__copied)
   expect(copied.length).toBeGreaterThan(0)
   expect(copied.join('\n')).toContain('Scene One')
+  expect(errors).toEqual([])
+})
+
+const DESKTOP_ONLY = 'Desktop app: this runs in the Slate desktop app for now.'
+
+test('Slate brain pill answers with the Desktop app message', async ({ page }) => {
+  const errors = watchErrors(page)
+  await page.goto('/slate/')
+  await page.getByPlaceholder('New project title — e.g. Night Market').fill('Brain Pill')
+  await page.getByRole('button', { name: 'Create Project' }).click()
+  await page.getByRole('button', { name: 'Brain offline' }).click()
+  await expect(page.getByText(DESKTOP_ONLY)).toBeVisible()
+  expect(errors).toEqual([])
+})
+
+test('Slate brain action (Break Down) answers with the Desktop app message', async ({ page }) => {
+  const errors = watchErrors(page)
+  await page.goto('/slate/')
+  await page.getByPlaceholder('New project title — e.g. Night Market').fill('Brain Action')
+  await page.getByRole('button', { name: 'Create Project' }).click()
+  await page.getByRole('button', { name: 'Refs', exact: true }).click()
+  const chooser = page.waitForEvent('filechooser')
+  await page.getByRole('button', { name: '+ Add images or clips' }).click()
+  await (await chooser).setFiles(['tests/fixtures/still.png'])
+  await expect(page.locator('img[src^="blob:"]')).toHaveCount(1, { timeout: 20_000 })
+  await page.getByRole('button', { name: 'Break Down' }).click()
+  await expect(page.getByText(DESKTOP_ONLY)).toBeVisible()
   expect(errors).toEqual([])
 })

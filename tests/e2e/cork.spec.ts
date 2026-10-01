@@ -5,9 +5,9 @@ test('Cork Board loads, keeps the project after reload, exports Fountain, import
   const errors = watchErrors(page)
   await page.setViewportSize({ width: 1280, height: 800 })
   await page.goto('/cork/')
-  await expectPillClear(page)
   const title = page.locator('#projectTitle')
   await expect(title).toBeVisible()
+  await expectPillClear(page)
 
   await title.fill('Smoke Test Film')
   await title.press('Tab')

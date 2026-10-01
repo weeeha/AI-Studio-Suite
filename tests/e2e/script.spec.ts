@@ -5,9 +5,10 @@ test('ScriptBreak imports a Fountain script, keeps it after reload, saves the pr
   const errors = watchErrors(page)
   await page.setViewportSize({ width: 1280, height: 800 })
   await page.goto('/script/')
-  await expectPillClear(page)
+  await expect(page.locator('#fileInput')).toBeAttached()
   await page.locator('#fileInput').setInputFiles('tests/fixtures/two-scenes.fountain')
   await expect(page.locator('.scene-card')).toHaveCount(2)
+  await expectPillClear(page)
 
   const stored = await page.evaluate(() => localStorage.getItem('scriptbreak.db.v2') ?? '')
   expect(stored).toContain('KITCHEN')
