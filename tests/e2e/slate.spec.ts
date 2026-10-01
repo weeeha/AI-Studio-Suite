@@ -27,8 +27,15 @@ async function expectNoBlankFrames(page: import('@playwright/test').Page) {
   for (const m of means) expect(m, `frame means ${means.map((x) => x.toFixed(1)).join(', ')}`).toBeGreaterThan(8)
 }
 
+const SHEET = '{"lensing":"35mm","lighting":"soft key","palette":"teal","composition":"thirds","movement":"static","texture":"grain","mood":"calm","notes":""}'
+const STATUS_OK = { ok: true, provider: 'ai-gateway', models: {} }
+
 test.beforeEach(async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 })
+  // Slate asks /api/ai for brain status on load. Local serve has no such route and the preview has the
+  // real one, so every test answers it here; brain tests register their own stub later and win.
+  // The default is "online" because a 404 makes the browser itself log a console error.
+  await page.route('**/api/ai', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(STATUS_OK) }))
   // Capture clipboard writes so the export check works in both engines.
   await page.addInitScript(() => {
     ;(window as unknown as { __copied: string[] }).__copied = []
@@ -101,20 +108,56 @@ test('Slate copies the Markdown shot list (clipboard export)', async ({ page }) 
 
 const DESKTOP_ONLY = 'Desktop app: this runs in the Slate desktop app for now.'
 
-test('Slate brain pill answers with the Desktop app message', async ({ page }) => {
+// Every /api/ai request in these tests is answered by a stub; none reaches a real route.
+test('Slate brain offline: the pill and Break Down show the Desktop app message', async ({ page }) => {
   const errors = watchErrors(page)
+  await page.route('**/api/ai', (route) => route.fulfill({ status: 404, contentType: 'text/plain', body: 'Not found' }))
   await page.goto('/slate/')
-  await page.getByPlaceholder('New project title — e.g. Night Market').fill('Brain Pill')
+  await page.getByPlaceholder('New project title — e.g. Night Market').fill('Brain Offline')
   await page.getByRole('button', { name: 'Create Project' }).click()
   await page.getByRole('button', { name: 'Brain offline' }).click()
   await expect(page.getByText(DESKTOP_ONLY)).toBeVisible()
+  await page.locator('.brain-toast').click() // dismiss, so it cannot cover the tabs
+  await expect(page.locator('.brain-toast')).toHaveCount(0)
+  await page.getByRole('button', { name: 'Refs', exact: true }).click()
+  const chooser = page.waitForEvent('filechooser')
+  await page.getByRole('button', { name: '+ Add images or clips' }).click()
+  await (await chooser).setFiles(['tests/fixtures/still.png'])
+  await expect(page.locator('img[src^="blob:"]')).toHaveCount(1, { timeout: 20_000 })
+  await page.getByRole('button', { name: 'Break Down' }).click()
+  await expect(page.getByText(DESKTOP_ONLY).first()).toBeVisible()
+  // The browser logs "Failed to load resource ... 404" for each stubbed 404 itself; nothing else may be logged.
+  expect(errors.length).toBeGreaterThan(0)
+  expect(errors.filter((e) => !/^Failed to load resource: the server responded with a status of 404/.test(e))).toEqual([])
+})
+
+test('Slate brain online: the pill stops saying Brain offline', async ({ page }) => {
+  const errors = watchErrors(page)
+  await page.route('**/api/ai', (route) =>
+    route.request().method() === 'GET'
+      ? route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(STATUS_OK) })
+      : route.fulfill({ status: 500, contentType: 'application/json', body: JSON.stringify({ ok: false, error: 'unexpected POST' }) }),
+  )
+  await page.goto('/slate/')
+  await page.getByPlaceholder('New project title — e.g. Night Market').fill('Brain Online')
+  await page.getByRole('button', { name: 'Create Project' }).click()
+  // App.tsx renders "Brain: Claude Code — test" once any brain reports available.
+  await expect(page.getByRole('button', { name: 'Brain: Claude Code — test' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Brain offline' })).toHaveCount(0)
   expect(errors).toEqual([])
 })
 
-test('Slate brain action (Break Down) answers with the Desktop app message', async ({ page }) => {
+test('Slate Break Down renders the element sheet from the route and sends a well-formed request', async ({ page }) => {
   const errors = watchErrors(page)
+  const posts: Array<Record<string, unknown>> = []
+  await page.route('**/api/ai', async (route) => {
+    const req = route.request()
+    if (req.method() === 'GET') return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(STATUS_OK) })
+    posts.push(JSON.parse(req.postData() ?? '{}'))
+    return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, text: SHEET, elapsedMs: 5 }) })
+  })
   await page.goto('/slate/')
-  await page.getByPlaceholder('New project title — e.g. Night Market').fill('Brain Action')
+  await page.getByPlaceholder('New project title — e.g. Night Market').fill('Brain Sheet')
   await page.getByRole('button', { name: 'Create Project' }).click()
   await page.getByRole('button', { name: 'Refs', exact: true }).click()
   const chooser = page.waitForEvent('filechooser')
@@ -122,6 +165,16 @@ test('Slate brain action (Break Down) answers with the Desktop app message', asy
   await (await chooser).setFiles(['tests/fixtures/still.png'])
   await expect(page.locator('img[src^="blob:"]')).toHaveCount(1, { timeout: 20_000 })
   await page.getByRole('button', { name: 'Break Down' }).click()
-  await expect(page.getByText(DESKTOP_ONLY)).toBeVisible()
+  await expect(page.getByText('Element sheet')).toBeVisible()
+  await expect(page.getByText('35mm')).toBeVisible()
+  await expect(page.getByText('soft key')).toBeVisible()
+  expect(posts).toHaveLength(1)
+  const body = posts[0] as { tool: string; system: string; tier: string; images: Array<{ mediaType: string }> }
+  expect(body.tool).toBe('slate')
+  expect(typeof body.system).toBe('string')
+  expect(body.system.length).toBeGreaterThan(0)
+  expect(['fast', 'standard', 'top']).toContain(body.tier)
+  expect(body.images).toHaveLength(1)
+  expect(body.images[0].mediaType).toBe('image/png')
   expect(errors).toEqual([])
 })
