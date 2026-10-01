@@ -51,3 +51,8 @@ test('enabledTools keeps order and drops disabled tools', () => {
 test('fillCommand substitutes port and path', () => {
   assert.equal(fillCommand('vite --port {port} --base {path}', { port: 5171, path: '/cork/' }), 'vite --port 5171 --base /cork/')
 })
+
+test('every committed dev command binds 127.0.0.1', async () => {
+  const { tools } = await loadRegistry(fileURLToPath(new URL('../..', import.meta.url)))
+  for (const t of tools) assert.ok(t.dev.includes('127.0.0.1'), `${t.id} dev command lacks 127.0.0.1`)
+})
