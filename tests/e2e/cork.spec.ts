@@ -9,7 +9,15 @@ test('Cork Board loads, keeps the project after reload, exports Fountain, import
 
   await title.fill('Smoke Test Film')
   await title.press('Tab')
-  await page.waitForTimeout(800) // autosave is debounced at 400ms
+  await expect
+    .poll(() =>
+      page.evaluate(() =>
+        Object.keys(localStorage).some(
+          (k) => k.startsWith('cork-board-') && (localStorage.getItem(k) ?? '').includes('Smoke Test Film'),
+        ),
+      ),
+    )
+    .toBe(true)
   await page.reload()
   await expect(page.locator('#projectTitle')).toHaveValue('Smoke Test Film')
 
@@ -18,10 +26,19 @@ test('Cork Board loads, keeps the project after reload, exports Fountain, import
   await page.locator('#downloadFountainBtn').click()
   expect((await download).suggestedFilename()).toMatch(/\.fountain$/)
 
-  // Round-trip in the same Export dialog (download buttons keep it open): JSON out, then back in.
+  // Round-trip: JSON out (download buttons keep the Export dialog open), then back in.
   const jsonDownload = page.waitForEvent('download')
   await page.locator('#downloadJsonBtn').click()
   const jsonPath = await (await jsonDownload).path()
+
+  // Move the open project away from the exported title so the import has to bring it back.
+  await page.keyboard.press('Escape')
+  await title.fill('Changed Before Import')
+  await title.press('Tab')
+  await expect(title).toHaveValue('Changed Before Import')
+
+  // Cork Board's import adds the file as a new project and switches to it.
+  await page.locator('#exportBtn').click()
   const chooser = page.waitForEvent('filechooser')
   await page.locator('#importJsonBtn').click()
   await (await chooser).setFiles(jsonPath)
