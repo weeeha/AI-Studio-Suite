@@ -1,8 +1,26 @@
 {
-  "cork": { "repo": "weeeha/cork-board", "sha": "7f071de08e55237778519ae175c88dced6719ecc" },
-  "script": { "repo": "weeeha/scriptbreak", "sha": "ed9efb86125b713ce430b7337f27392adec071a9" },
-  "slate": { "repo": "weeeha/slate", "sha": "3bf1dfe610fe5db93fec6a156ed37483afcd4b14" },
-  "storyboard": { "repo": "weeeha/storyboard-reference-studio", "sha": "356dbf1bbdeda0c17bddb893a799f04e445d2ff1" },
-  "motion": { "repo": "weeeha/motion-previs-studio", "sha": "95e7d0ff1d4cc546f7eb09a74ccbd084988a19bc" },
-  "blockout": { "repo": "weeeha/blockout", "sha": "3f2d0564fd575f70fc28e9bfaa7e94b05e3955d9" }
+  "cork": {
+    "repo": "weeeha/cork-board",
+    "sha": "7f071de08e55237778519ae175c88dced6719ecc"
+  },
+  "script": {
+    "repo": "weeeha/scriptbreak",
+    "sha": "ed9efb86125b713ce430b7337f27392adec071a9"
+  },
+  "slate": {
+    "repo": "weeeha/slate",
+    "sha": "3bf1dfe610fe5db93fec6a156ed37483afcd4b14"
+  },
+  "storyboard": {
+    "repo": "weeeha/storyboard-reference-studio",
+    "sha": "356dbf1bbdeda0c17bddb893a799f04e445d2ff1"
+  },
+  "motion": {
+    "repo": "weeeha/motion-previs-studio",
+    "sha": "95e7d0ff1d4cc546f7eb09a74ccbd084988a19bc"
+  },
+  "blockout": {
+    "repo": "weeeha/blockout",
+    "sha": "3f2d0564fd575f70fc28e9bfaa7e94b05e3955d9"
+  }
 }
