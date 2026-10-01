@@ -12,10 +12,10 @@ test('home lists the pipeline and opens Cork Board', async ({ page }) => {
 
 test('each tool ships its fork LICENSE and NOTICE', async ({ request }) => {
   for (const path of ['/cork/', '/script/']) {
-    const license = await request.get(`${path}LICENSE`)
-    expect(license.ok(), `${path}LICENSE`).toBe(true)
+    const license = await request.get(`${path}LICENSE.txt`)
+    expect(license.ok(), `${path}LICENSE.txt`).toBe(true)
     expect(await license.text()).toContain('Apache License')
   }
-  const notice = await request.get('/cork/NOTICE')
-  expect(notice.ok(), '/cork/NOTICE').toBe(true)
+  const notice = await request.get('/cork/NOTICE.txt')
+  expect(notice.ok(), '/cork/NOTICE.txt').toBe(true)
 })

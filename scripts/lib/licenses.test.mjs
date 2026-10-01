@@ -17,13 +17,13 @@ function setup(files) {
 
 test('copies LICENSE and NOTICE from the fork root', () => {
   const { src, target } = setup({ LICENSE: 'apache', NOTICE: 'notice' })
-  assert.deepEqual(copyLicenses(src, target), ['LICENSE', 'NOTICE'])
-  assert.equal(readFileSync(join(target, 'LICENSE'), 'utf8'), 'apache')
-  assert.equal(readFileSync(join(target, 'NOTICE'), 'utf8'), 'notice')
+  assert.deepEqual(copyLicenses(src, target), ['LICENSE.txt', 'NOTICE.txt'])
+  assert.equal(readFileSync(join(target, 'LICENSE.txt'), 'utf8'), 'apache')
+  assert.equal(readFileSync(join(target, 'NOTICE.txt'), 'utf8'), 'notice')
 })
 
 test('skips files the fork does not have', () => {
   const { src, target } = setup({ LICENSE: 'apache' })
-  assert.deepEqual(copyLicenses(src, target), ['LICENSE'])
-  assert.equal(existsSync(join(target, 'NOTICE')), false)
+  assert.deepEqual(copyLicenses(src, target), ['LICENSE.txt'])
+  assert.equal(existsSync(join(target, 'NOTICE.txt')), false)
 })
