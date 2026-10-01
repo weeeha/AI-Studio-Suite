@@ -53,7 +53,7 @@ test('Slate imports an image and a clip as references and shows their frames', a
   expect(errors).toEqual([])
 })
 
-test('Slate copies a compiled prompt (clipboard export)', async ({ page }) => {
+test('Slate copies the Markdown shot list (clipboard export)', async ({ page }) => {
   const errors = watchErrors(page)
   await page.goto('/slate/')
   await page.getByPlaceholder('New project title — e.g. Night Market').fill('Copy Test')
@@ -68,5 +68,6 @@ test('Slate copies a compiled prompt (clipboard export)', async ({ page }) => {
   await expect(page.getByRole('button', { name: '✓' })).toBeVisible()
   const copied = await page.evaluate(() => (window as unknown as { __copied: string[] }).__copied)
   expect(copied.length).toBeGreaterThan(0)
+  expect(copied.join('\n')).toContain('Scene One')
   expect(errors).toEqual([])
 })

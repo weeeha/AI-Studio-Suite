@@ -15,8 +15,10 @@ test('enabled tools link to their path; disabled tools say desktop only and link
   const cork = screen.getByRole('article', { name: 'Cork Board' })
   expect(within(cork).getByRole('link', { name: 'Open Cork Board' })).toHaveAttribute('href', './cork/')
   const slate = screen.getByRole('article', { name: 'Slate' })
-  expect(within(slate).getByText('Desktop only for now')).toBeInTheDocument()
-  expect(within(slate).getByRole('link', { name: 'Slate fork on GitHub' })).toHaveAttribute('href', 'https://github.com/weeeha/slate')
+  expect(within(slate).getByRole('link', { name: 'Open Slate' })).toHaveAttribute('href', './slate/')
+  const storyboard = screen.getByRole('article', { name: 'Storyboard Reference Studio' })
+  expect(within(storyboard).getByText('Desktop only for now')).toBeInTheDocument()
+  expect(within(storyboard).getByRole('link', { name: 'Storyboard Reference Studio fork on GitHub' })).toHaveAttribute('href', 'https://github.com/weeeha/storyboard-reference-studio')
 })
 
 test('credits the author with license and donation links', () => {
