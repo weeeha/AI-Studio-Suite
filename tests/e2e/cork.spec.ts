@@ -46,3 +46,13 @@ test('Cork Board loads, keeps the project after reload, exports Fountain, import
 
   expect(errors).toEqual([])
 })
+
+test('the suite pill switches from Cork Board to ScriptBreak', async ({ page }) => {
+  const errors = watchErrors(page)
+  await page.goto('/cork/')
+  const pill = page.locator('suite-pill')
+  await pill.getByRole('button', { name: 'Suite' }).click()
+  await pill.getByRole('menuitem', { name: 'ScriptBreak' }).click()
+  await expect(page).toHaveURL(/\/script\/$/)
+  expect(errors).toEqual([])
+})
