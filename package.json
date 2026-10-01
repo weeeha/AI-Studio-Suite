@@ -2,8 +2,13 @@
   "name": "ai-studio-suite",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=24" },
-  "workspaces": ["apps/*", "packages/*"],
+  "engines": {
+    "node": ">=24"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
     "test": "node --test \"scripts/lib/*.test.mjs\"",
     "test:e2e": "playwright test",
@@ -15,6 +20,7 @@
     "sync-ui": "node scripts/sync-ui.mjs"
   },
   "devDependencies": {
-    "@playwright/test": "^1.63.0"
+    "@playwright/test": "^1.63.0",
+    "vite": "^8.3.2"
   }
 }
