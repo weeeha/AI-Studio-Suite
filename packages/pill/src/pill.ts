@@ -1,6 +1,6 @@
 import css from './pill.css'
 
-export type PillTool = { id: string; name: string; path: string; enabled: boolean; theme: 'light' | 'dark'; pillCorner: 'bottom-left' | 'bottom-right' }
+export type PillTool = { id: string; name: string; path: string; enabled: boolean; theme: 'light' | 'dark'; pillCorner: 'bottom-left' | 'bottom-right'; pillBottom?: number }
 
 export function currentTool(tools: PillTool[], pathname: string): PillTool | undefined {
   return tools.find(t => pathname === t.path || pathname.startsWith(t.path))
@@ -40,6 +40,7 @@ export function mountPill({ tools, pathname, doc = document }: { tools: PillTool
   const host = doc.createElement('suite-pill')
   host.dataset.theme = here?.theme ?? 'dark'
   host.dataset.corner = here?.pillCorner ?? 'bottom-left'
+  if (here?.pillBottom !== undefined) host.style.setProperty('--pill-bottom', `${here.pillBottom}px`)
   const root = host.attachShadow({ mode: 'open' })
 
   const style = doc.createElement('style')
@@ -82,6 +83,14 @@ export function mountPill({ tools, pathname, doc = document }: { tools: PillTool
       menu.append(span)
     }
   }
+
+  const rule = doc.createElement('hr')
+  const credits = doc.createElement('a')
+  credits.className = 'credits'
+  credits.textContent = 'Credits'
+  credits.href = hrefTo(from, '/') + '#credits'
+  credits.setAttribute('role', 'menuitem')
+  menu.append(rule, credits)
 
   const items = () => [...menu.querySelectorAll<HTMLElement>('a')]
   const setOpen = (open: boolean, restoreFocus = true) => {

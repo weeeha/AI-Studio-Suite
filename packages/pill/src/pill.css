@@ -2,7 +2,7 @@
   all: initial;
   position: fixed;
   left: 16px;                   /* ds: card-margin */
-  bottom: 16px;
+  bottom: var(--pill-bottom, 16px); /* a tool can lift the pill clear of its own bottom controls */
   z-index: 2147483000;
   display: flex;
   flex-direction: column-reverse; /* trigger first in DOM order, menu drawn above it */
@@ -79,12 +79,13 @@ a::before, [data-disabled]::before {
   color: var(--pill-muted);
   text-align: center;
 }
-a:not(.home)::before, [data-disabled]::before { counter-increment: tool; content: counter(tool); }
+a:not(.home):not(.credits)::before, [data-disabled]::before { counter-increment: tool; content: counter(tool); }
 a:hover { background: var(--pill-hover); }
 a[aria-current="page"] { background: var(--pill-current); font-weight: 600; }
 a[aria-current="page"]::after { content: "Current"; font-size: 13px; font-weight: 500; color: var(--pill-text); }
 [data-disabled] { color: var(--pill-muted); cursor: default; }
 .note { font-size: 13px; }
+hr { border: 0; border-top: 1px solid var(--pill-border); margin: 4px 0; }
 [role="separator"] { height: 1px; background: var(--pill-border); margin: 4px 8px; }
 :focus-visible { outline: 2px solid var(--pill-ring); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) {

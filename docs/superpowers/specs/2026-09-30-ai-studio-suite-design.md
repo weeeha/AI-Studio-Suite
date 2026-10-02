@@ -181,7 +181,7 @@ interface InboxItem {
 
 ### 7.1 Storage (React tools)
 
-- **Projects:** stored in the browser's private file system (OPFS), behind each tool's interface. Works in Chrome and Safari.
+- **Projects:** stored in IndexedDB behind each tool's interface, with media kept as `{ type, bytes }` records. (Amended 2026-10-01: OPFS was the first choice, but a probe showed WebKit 26.6 failing `getFileHandle` on OPFS while IndexedDB works in both engines; see Plan 2, decision D1.)
 - **Zip import/export:** "Export project (.zip)" and "Import project" use the desktop folder layout, so projects move between browser and desktop.
 - **Existing storage stays:** Cork Board and ScriptBreak keep their `localStorage` keys (`cork-board-*`, `scriptbreak*`).
 - **Namespacing:** new storage is prefixed `<tool id>:`. No collisions exist today.
@@ -282,7 +282,7 @@ MCP agent control, yt-dlp URL import, Circle Take auto-discovery, Reveal in Find
 | --- | --- |
 | Renderers reach Electron outside the typed interface (`process`, `require`) | Adapter work starts with a grep per fork; fix with small guarded shims |
 | Vercel build time with six `npm ci` runs (Hobby limit is 45 min) | Measure on the first deploy; cache per fork if needed |
-| Safari OPFS write API differs from Chrome | Prove the OPFS write path in Safari in the first adapter (Slate) before the others |
+| Safari OPFS write API differs from Chrome | Resolved 2026-10-01: WebKit failed the OPFS probe, so adapters use IndexedDB |
 | Safari WebCodecs H.264 encode support | Spike in 0b before committing to the encoder per tool |
 | OPFS and IndexedDB eviction | `navigator.storage.persist()`; zip export as the backup path |
 | Upstream changes the desktop interface | Adapters implement the typed interface, so typecheck fails on the merge branch |

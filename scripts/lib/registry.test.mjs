@@ -52,6 +52,15 @@ test('pillCorner must be bottom-left or bottom-right', () => {
   assert.deepEqual(validateRegistry(ok, lockFor(ok)), [])
 })
 
+test('pillBottom is optional and must be an integer from 16 to 200', () => {
+  for (const pillBottom of [8, 12.5, 400, '40']) {
+    const tools = [tool({ pillBottom })]
+    assert.ok(validateRegistry(tools, lockFor(tools)).some(e => e.includes('bad pillBottom for cork')), String(pillBottom))
+  }
+  const ok = [tool({ pillBottom: 48 })]
+  assert.deepEqual(validateRegistry(ok, lockFor(ok)), [])
+})
+
 test('enabledTools keeps order and drops disabled tools', () => {
   const tools = [tool(), tool({ id: 'slate', enabled: false }), tool({ id: 'script' })]
   assert.deepEqual(enabledTools(tools).map(t => t.id), ['cork', 'script'])
