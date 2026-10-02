@@ -1,0 +1,10 @@
+{
+  "name": "@suite/pill",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "esbuild src/entry.ts --bundle --format=esm --minify --loader:.css=text --outfile=dist/pill.js",
+    "test": "vitest run"
+  },
+  "devDependencies": { "esbuild": "^0.28.2", "jsdom": "^30.0.1", "vitest": "^4.1.10", "typescript": "^5.9.0" }
+}

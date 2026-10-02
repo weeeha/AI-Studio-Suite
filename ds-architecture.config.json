@@ -1,0 +1,8 @@
+{
+  "profile": "component-library",
+  "adoption": "greenfield",
+  "scopeRoles": { "components": ["apps/home/src/**"], "styles": ["apps/home/src/ui/styles/**"], "app": ["apps/home/src/**"] },
+  "paths": { "nameContract": "apps/home/src/ui/tokens.ts", "styleEntry": ["apps/home/src/ui/styles/globals.css"] },
+  "axes": [],
+  "commands": { "test": "npm test" }
+}

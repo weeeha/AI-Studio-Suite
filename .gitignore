@@ -1,0 +1,9 @@
+forks/
+node_modules/
+.DS_Store
+.vercel
+dist/
+.build/
+test-results/
+playwright-report/
+.env*
