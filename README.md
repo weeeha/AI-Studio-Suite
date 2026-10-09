@@ -2,7 +2,29 @@
 
 Personal fork of the Wasserman Productions AI-filmmaking tools, restyled on the Minimal Design System (`@weeeha/ui`) and tailored to Nick's workflow.
 
-**Status:** exploration · **Live:** https://ai-studio-suite-eta.vercel.app (Vercel login required; Cork Board + ScriptBreak) · **Started:** 2026-09-30
+![Suite launcher listing the six tools, with Cork Board and ScriptBreak open](docs/screenshots/overview.webp)
+
+**Status:** exploration · **Live:** https://ai-studio-suite-eta.vercel.app (public; Cork Board and ScriptBreak run in the browser, the other four are desktop only for now) · **Started:** 2026-09-30
+
+## Screenshots
+
+![Cork Board with demo cards grouped by act](docs/screenshots/cork-board.webp)
+
+Cork Board at `/cork/`, opened on its demo project.
+
+![ScriptBreak scene breakdown of the demo script](docs/screenshots/scriptbreak.webp)
+
+ScriptBreak at `/script/` after Load demo, showing the scene breakdown.
+
+## Run locally
+
+Needs Node 24 or newer (`engines` in `package.json`).
+
+- `npm run build:local` builds `dist/` from the clones in `forks/`.
+- `npm run serve` serves `dist/` on http://127.0.0.1:4170.
+- `npm run dev` runs every enabled tool behind one gateway on http://localhost:5170.
+- `npm test` runs the build-script unit tests; `npm run test:e2e` runs the Playwright smoke tests.
+- `npm run pin` writes the current `forks/*` commits into `suite.lock.json`.
 
 ## Repo map
 
