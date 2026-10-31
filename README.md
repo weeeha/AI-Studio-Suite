@@ -1,5 +1,13 @@
 # AI Studio Suite
 
+**Problem.** The six AI-filmmaking tools from Wasserman Productions (Blockout, ScriptBreak, Storyboard Reference Studio, Slate, Motion Previs Studio, Cork Board) are separate Electron and Tauri apps, each with its own styling and few hand-offs between them.
+
+**Idea.** Pin each fork to a commit and build all six into one web suite at one address, then restyle them on Minimal Design System tokens without touching component code.
+
+**Built.** The suite layer around the forks: a build that fetches the pinned fork commits into one static site, a home page and a tool-switcher pill on Minimal Design System tokens, a one-port dev gateway and Chromium and WebKit smoke tests. Exploration status: Cork Board and ScriptBreak run in the browser at https://ai-studio-suite-eta.vercel.app and the other four are desktop only for now. 35 commits on 5 days, Oct 1 to Oct 18, 2026.
+
+**Decision.** Inside the forks the restyle swaps token values only, and `@weeeha/ui` components appear only in new suite UI, instead of rewriting existing screens on design-system components. Reuse wins every tie, and token names stay each app's own so upstream merges rarely conflict.
+
 Personal fork of the Wasserman Productions AI-filmmaking tools, restyled on the Minimal Design System (`@weeeha/ui`) and tailored to Nick's workflow.
 
 ![Suite launcher listing the six tools, with Cork Board and ScriptBreak open](docs/screenshots/overview.webp)
